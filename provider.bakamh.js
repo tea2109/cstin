@@ -1,15 +1,15 @@
 export const { parseHTML } = await import('https://gcore.jsdelivr.net/npm/linkedom/worker.min.js');
 
 export const meta = {
-  code: 'bakamh.ru',
-  base: 'bakamh.ru',
+  code: 'bakamh.com',
+  base: 'bakamh.com',
   name: '巴卡漫画',
-  host: ['bakamh.ru', 'bakamh.com', 'baka3.me', 'baka1.my', 'baka2.de'],
+  host: ['bakamh.com'],
   word: ['漫画', '中文漫画', '韩漫', 'BL', 'GL'],
 }
 
 export const routes = [
-  { key: 'list', type: 'template', pattern: '/manhwa/page/{page}/' },
+  { key: 'list', type: 'template', pattern: '/manga/page/{page}/' },
   {
     key: 'search',
     match: 'word',

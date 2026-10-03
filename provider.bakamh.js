@@ -45,21 +45,79 @@ export const entryMeta = async () => [
 
 export const entryList = async ({ url, code }) => {
   console.info('[Bakamh] fetch list:', url)
-  const { document } = await fetch(url, { headers: { 'accept-language': 'zh-CN,zh;q=0.9', 'referer': 'https://bakamh.com/' } }).then(v => v.text()).then(parseHTML)
-  const nodes = [...document.querySelectorAll('.c-tabs-item__content'), ...document.querySelectorAll('.row.c-tabs-item__content')]
-  const unique = new Map()
-  for (const el of nodes) {
-    const a = el.querySelector('.post-title a') || el.querySelector('.tab-thumb a') || el.querySelector('a[href*="/manga/"]')
-    if (!a) continue
-    const link = abs(a.getAttribute('href'), url)
-    if (!link || !link.includes('/manga/')) continue
-    const name = (el.querySelector('.post-title a')?.textContent || a.getAttribute('title') || '').trim()
-    if (!name) continue
-    const img = el.querySelector('.tab-thumb img, img')
-    const cove = cleanImage(img, url)
-    unique.set(link, { mode: 'comic', code: hash(`${code}:${link}`), link, cove, name, cardAction: scheme('call', { method: 'entryPost', link }) })
+  try {
+    const response = await fetch(url, {
+      headers: {
+        'accept': 'text/html,application/xhtml+xml',
+        'accept-language': 'zh-CN,zh;q=0.9',
+        'referer': 'https://bakamh.com/',
+        'user-agent': 'Mozilla/5.0 (Linux; Android 15) AppleWebKit/537.36 Chrome/140 Mobile Safari/537.36',
+      },
+      redirect: 'follow',
+    })
+    const html = await response.text()
+    console.info('[Bakamh] status:', response.status, 'length:', html.length, 'final:', response.url)
+
+    const { document } = parseHTML(html)
+    const selectors = [
+      '.c-tabs-item__content',
+      '.row.c-tabs-item__content',
+      '.page-item-detail',
+      '.item-summary',
+    ]
+    let nodes = []
+    for (const selector of selectors) {
+      nodes = [...document.querySelectorAll(selector)]
+      if (nodes.length) {
+        console.info('[Bakamh] matched selector:', selector, nodes.length)
+        break
+      }
+    }
+
+    const unique = new Map()
+    for (const el of nodes) {
+      const a = el.querySelector('.post-title a') || el.querySelector('a[href*="/manga/"]')
+      if (!a) continue
+      const link = abs(a.getAttribute('href'), url)
+      if (!link || !link.includes('/manga/')) continue
+      const name = (el.querySelector('.post-title a')?.textContent || a.getAttribute('title') || a.textContent || '').trim()
+      if (!name) continue
+      const img = el.querySelector('.tab-thumb img, .item-thumb img, img')
+      const cove = cleanImage(img, url)
+      unique.set(link, {
+        mode: 'comic',
+        code: hash(`${code}:${link}`),
+        link,
+        cove,
+        name,
+        cardAction: scheme('call', { method: 'entryPost', link }),
+      })
+    }
+
+    if (unique.size) return [...unique.values()]
+
+    // Diagnostic card: makes otherwise invisible request/parser failures visible in TinTok.
+    const pageTitle = document.querySelector('title')?.textContent?.trim() || '无 title'
+    const h1 = document.querySelector('h1')?.textContent?.trim() || ''
+    return [{
+      mode: 'comic',
+      code: hash(`bakamh-debug:${response.status}:${html.length}`),
+      name: `诊断 HTTP ${response.status} · HTML ${html.length} · ${pageTitle}${h1 ? ' · ' + h1 : ''}`,
+      cove: '',
+      link: url,
+      cardAction: scheme('call', { method: 'entryPost', link: url }),
+    }]
+  } catch (e) {
+    console.error('[Bakamh] list error:', e)
+    return [{
+      mode: 'comic',
+      code: hash('bakamh-debug-error'),
+      name: `诊断 请求失败 · ${String(e)}`,
+      cove: '',
+      link: 'https://bakamh.com/manga/',
+      cardAction: scheme('call', { method: 'entryPost', link: 'https://bakamh.com/manga/' }),
+    }]
   }
-  return [...unique.values()]
 }
 
 export const entryPost = async ({ link, url }) => {

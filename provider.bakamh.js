@@ -9,11 +9,20 @@ export const meta = {
 }
 
 export const routes = [
-  { key: 'list', path: '/manga/', paging: { pageKey: 'page' } },
-  { key: 'latest', path: '/manga/', paging: { pageKey: 'page' }, defaults: { m_orderby: 'latest' } },
-  { key: 'popular', path: '/manga/', paging: { pageKey: 'page' }, defaults: { m_orderby: 'views' } },
-  { key: 'rating', path: '/manga/', paging: { pageKey: 'page' }, defaults: { m_orderby: 'rating' } },
-  { key: 'search', match: 'word', path: '/', paging: { pageKey: 'page' }, paramMap: { word: 's' }, defaults: { post_type: 'wp-manga' } },
+  {
+    key: 'list',
+    path: '/manga/',
+    paging: { pageKey: 'page' },
+    defaults: { m_orderby: 'latest' },
+  },
+  {
+    key: 'search',
+    match: 'word',
+    path: '/',
+    paging: { pageKey: 'page' },
+    paramMap: { word: 's' },
+    defaults: { post_type: 'wp-manga' },
+  },
 ]
 
 const abs = (value, base) => {
@@ -28,10 +37,10 @@ const cleanImage = (img, base) => {
 }
 
 export const entryMeta = async () => [
-  { mode: 'radio', name: '全部', code: 'type=list' },
-  { mode: 'radio', name: '最新发布', code: 'type=latest' },
-  { mode: 'radio', name: '最多浏览', code: 'type=popular' },
-  { mode: 'radio', name: '评分', code: 'type=rating' },
+  { mode: 'radio', name: '最近更新', code: 'm_orderby=latest' },
+  { mode: 'radio', name: '最新发布', code: 'm_orderby=new-manga' },
+  { mode: 'radio', name: '最多浏览', code: 'm_orderby=trending' },
+  { mode: 'radio', name: '评分', code: 'm_orderby=rating' },
 ]
 
 export const entryList = async ({ url, code }) => {
